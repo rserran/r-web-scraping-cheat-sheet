@@ -2,7 +2,7 @@
 
 Inspired by Hartley Brody, this cheat sheet is about web scraping using [rvest](https://github.com/hadley/rvest),[httr](https://github.com/r-lib/httr), [Rselenium](https://github.com/ropensci/RSelenium) and [Rcrawler](https://github.com/salimk/Rcrawler). It covers many topics in this [blog](https://blog.hartleybrody.com/web-scraping-cheat-sheet/).
 
-While Hartley uses python's requests and beautifulsoup libraries, this cheat sheet covers the usage of httr and rvest. While rvest is good enough for many scraping tasks, httr is required for more advanced techniques. Also, usage of Rselenium(web driver) is also covered.
+While Hartley uses python's requests and beautifulsoup libraries, this cheat sheet covers the usage of httr and rvest. While rvest is good enough for many scraping tasks, httr is required for more advanced techniques. Usage of Rselenium(web driver) is also covered.
 
 I also recommend the book [The Ultimate Guide to Web Scraping](https://blog.hartleybrody.com/guide-to-web-scraping/) by Hartley Brody. Though it uses Python libraries, the underlying logic of web scraping is the same. The same strategies can be applied using any languages including R.
 
@@ -33,18 +33,19 @@ Please post issues [here](https://github.com/yusuzech/r-web-scraping-cheat-sheet
         10. <a href="#rvest7.10">Logins and Sessions</a>
         11. <a href="#rvest7.11">Web Scraping in Parallel</a>
 2. <a href="#rselenium">Web Scraping using Rselenium</a>
-    1. <a href="#rselenium1">Useful Libraries and Resources</a>
-    2. <a href="#rselenium2">Basics of Web Browsing using Rselenium</a>
-       1. <a href="#rselenium2.1">Navigating to Different Web Pages</a>
-       2. <a href="#rselenium2.2">Searching by id,CSS, xpath, ...</a>
-       3. <a href = "#rselenium2.3">Simulating Clicks, Key Presses and Enter Texts</a>
-    3. <a href="#rselenium3">Extract Texts from Web Pages</a>
-       1. <a href="#rselenium3.1">Extracting Texts using Rselenium</a>
-       2. <a href="#rselenium3.2">Extracting Texts using rvest</a>
+    1. <a href="#rselenium1">Why RSelenium</a>
+       1. <a href="#rselenium1.1">Pros and Cons from Using RSelenium</a>
+       2. <a href="#rselenium1.2">Useful Resources</a>
+    2. <a href="#rselenium2">Interacting with the Web Driver In Rselenium</a>
+       1. <a href="#rselenium2.0">How to Start</a>
+       2. <a href="#rselenium2.1">Navigating to different URLs</a>
+       3. <a href="#rselenium2.2">Simulating Scrolls, Clicks, Text Inputs, Logins, and Other Actions</a>
+    3. <a href="#rselenium3">Extract Content from the Web Page</a>
+       1. <a href="#rselenium3.1">Extracting Content using Rselenium</a>
+       2. <a href="#rselenium3.2">Extracting Content using Parsed Page Source and `rvest`</a>
     4. <a href = "#rselneium4">miscellanea</a>
        1. <a href="#rselenium4.1">Javascript</a>
        2. <a href="#rselenium4.2">Iframe</a>
-       3. <a href="#rselenium4.3">Comparison between Web Scraping Using Rselenium and rvest</a>
 3. <a href="#rcrawler">Web Scraping using Rcrawler</a>
 
 # 1. <a name="rvest">Web Scraping using rvest and httr</a>
@@ -72,9 +73,12 @@ There are many resources available online; these are what I found to be the most
 2. [Tutorial by  SAURAV KAUSHIK](https://www.analyticsvidhya.com/blog/2017/03/beginners-guide-on-web-scraping-in-r-using-rvest-with-hands-on-knowledge/)  : web-scraping tutorial using rvest
 3. [Tutorial by Hadley Wickham](http://blog.rstudio.com/2014/11/24/rvest-easy-web-scraping-with-r/)  : web-scraping tutorial using rvest 
 4. [w3schools CSS selectors reference](https://www.w3schools.com/CSSref/css_selectors.asp) : if you forget CSS syntax, just check it here
-5. [CSS Diner](https://flukeout.github.io/) : the easiest way to learn and understand CSS by playing games.
-6. [Chrome CSS selector plugin](https://selectorgadget.com/): the best tool to use for choosing CSS selector.
-7. [Stack Overflow](https://stackoverflow.com/) : You can find answers to most of your problems, no matter it's web scraping, rvest or CSS.
+5. [w3schools XPATH reference](<https://www.w3schools.com/xml/xpath_intro.asp>): XPATH is an alternative in selecting elements on websites. It's harder to learn but it's more flexible and robust.
+6. [CSS Diner](https://flukeout.github.io/) : the easiest way to learn and understand CSS by playing games.
+7. [Chrome CSS selector plugin](https://selectorgadget.com/): a convenient tool to use for choosing CSS selector.
+8. [ChroPath](<https://chrome.google.com/webstore/detail/chropath/ljngjbnaijcbncmcnjfhigebomdlkcjo>): a very convenient tool for choosing XPATH.
+9. [Stack Overflow](https://stackoverflow.com/) : You can find answers to most of your problems, no matter it's web scraping, rvest or CSS.
+10. [Web Scraping Sandbox](http://toscrape.com/): Great place to test your web scraping skills.
 
 **Functions and classes in rvest/httr:**
 
@@ -458,7 +462,7 @@ Sometimes you may encounter slow connections and want to move to other jobs inst
 ```R
 library(rvest)
 library(httr)
-my_session <- html_session("https://scrapethissite.com/",time(5)) # if you don't receive reponse within 5 seconds, it will throw an error
+my_session <- html_session("https://scrapethissite.com/",timeout(5)) # if you don't receive reponse within 5 seconds, it will throw an error
 
 #you can use try() or tryCatch() to continue if the error occured
 for(my_url in my_urls){
@@ -594,29 +598,422 @@ Also, you need to be aware of that: as you are making more concurrent requests, 
 
 ****
 
-# 2. <a name="rselenium">Web Scraping using Rselenium</a>(In Progress)
+# 2. <a name="rselenium">Web Scraping using Rselenium</a>
 
-## 2.1. <a name="rselenium1">Useful Libraries and Resources</a>
+## 2.1. <a name="rselenium1">Why RSelenium</a>
 
-## 2.2 <a name="rselenium2">Basics of Web Browsing using Rselenium</a>
-### 2.2.1. <a name = "rselenium2.1">Navigating to Different Web Pages</a>
+As mentioned in previous sections, in JavaScript heavy websites, the majority of content could be generated using JavaScript. When using a browser, it will make multiple requests for you while the original page is loading. However, if you use `httr` or `rvest`, only the original page will be loaded and JavaScript won't be executed. Hence some data is only available in browser.
 
-### 2.2.2. <a name = "rselenium2.2">Searching by id,CSS, xpath, ...</a>
 
-### 2.2.3. <a name = "rselenium2.3">Simulating Clicks, Key Presses and Enter Texts</a>
+
+[RSelenium](https://github.com/ropensci/RSelenium) makes use of [Selenium Web Driver](https://www.seleniumhq.org/projects/webdriver/) which simulates a browser(usually Chrome and Firefox) and renders web pages automatically, it will execute all the JavaScript codes for you so you will get a parsed page source instead of unparsed(raw) one.
+
+### 2.1.1 <a name="rselenium1.1">Pros and Cons from Using RSelenium</a>
+
+**Pros:**
+
+1. Renders JavaScript generated content automatically:
+   * One of the greatest headache from web scraping is that what you see in browser and what you get in response are different. By using RSelenium, you can avoid this issue.
+
+**Cons:**
+
+1. It's very slow:
+   * Since the browser loads everything on the web page(including photos, ads or even videos), it will be really slow comparing to making requests using `httr` or `rvest`.
+2. Lacking support:
+   * Comparing to Selenium in Python, RSelenium doesn't have a large user base and hence lacks support. If you ever searched RSelenium related questions, you might already found out that: many solutions could be obsolete , you couldn't find related topics or the only solutions available were for Python..
+
+### 2.1.2 <a name="rselenium1.2">Useful Resources</a>
+
+1. [Rselenium Github Page](https://github.com/ropensci/RSelenium): many useful resources are already listed here.
+2. [http://toscrape.com/](http://toscrape.com/): A sandbox for testing your web scraping script.
+
+## 2.2 <a name="rselenium2">Interacting with the Web Driver In Rselenium</a>
+
+### 2.2.1. <a name="rselenium2.0">How to Start</a>
+
+```R
+# Load the Library
+library(RSelenium)
+
+# start the server and browser(you can use other browsers here)
+rD <- rsDriver(browser=c("firefox"))
+
+driver <- rD$client
+
+# navigate to an URL
+driver$navigate("http://books.toscrape.com/")
+
+#close the driver
+driver$close()
+
+#close the server
+rD$server$stop()
+```
+
+**Common Issues and Solutions when starting the server and browser** 
+
+1. Port already in use:
+   - Solutions: [close the server](<https://stackoverflow.com/questions/43991498/rselenium-server-signals-port-is-already-in-use>)
+
+
+
+### 2.2.2. <a name = "rselenium2.1">Navigating to different URLs</a>
+
+**Using `driver.navigate()`:**
+
+```
+driver$navigate("http://books.toscrape.com/")
+```
+
+**Simulating a click on the link:**
+
+```R
+# navigate to an URL
+driver$navigate("http://toscrape.com/")
+
+# find the element
+elements <- driver$findElements("a",using = "css")
+
+# click the first link 
+elements[[1]]$clickElement()
+```
+
+**Go Back or Go Forward**
+
+```R
+driver$goBack()
+driver$goForward()
+```
+
+### 2.2.3. <a name = "rselenium2.2">Simulating Scrolls, Clicks, Text Inputs, Logins, and Other Actions</a>
+
+**1. Simulating Scrolls:**
+
+You can scroll up or down by sending the `pageUp` or `pageDown` keypress to the browser. 
+
+*Scroll Down Once:*
+
+```R
+driver$navigate("http://quotes.toscrape.com/scroll")
+# find the webpage body
+element <- driver$findElement("css", "body")
+
+#scroll down once ----
+element$sendKeysToElement(list(key = "page_down"))
+```
+
+*Scroll Down Multiple Times:*
+
+```R
+element <- driver$findElement("css", "body")
+# Scroll down 10 times
+for(i in 1:10){
+    element$sendKeysToElement(list("key"="page_down"))
+    # please make sure to sleep a couple of seconds to since it takes time to load contents
+    Sys.sleep(2) 
+}
+```
+
+*Scroll Down Until the End(Not Recommended if There Are too Many Pages):*
+
+```
+element <- driver$findElement("css", "body")
+flag <- TRUE
+counter <- 0
+n <- 5
+while(flag){
+    counter <- counter + 1
+    #compare the pagesource every n(n=5) time, since sometimes one scroll down doesn't render new content
+    for(i in 1:n){
+        element$sendKeysToElement(list("key"="page_down"))
+        Sys.sleep(2)
+    }
+    if(exists("pagesource")){
+        if(pagesource == driver$getPageSource()[[1]]){
+            flag <- FALSE
+            writeLines(paste0("Scrolled down ",n*counter," times.\n"))
+        } else {
+            pagesource <- driver$getPageSource()[[1]]
+        }
+    } else {
+        pagesource <- driver$getPageSource()[[1]]
+    }
+}
+```
+
+
+
+**2. Simulating Clicks:**
+
+*Click a Single Element by CSS:*
+
+```R
+driver$navigate("http://quotes.toscrape.com/scroll")
+
+#locate element using CSS(find the first match)
+driver$navigate("https://scrapethissite.com/pages/ajax-javascript/#2011")
+element <- driver$findElement(using = "css",".year-link")
+element$clickElement()
+```
+
+*Click a Single Element by Moving Mouse to Element:*
+
+```R
+driver$navigate("https://scrapethissite.com/pages/ajax-javascript/#2011")
+element <- driver$findElement(using = "css",".year-link")
+driver$mouseMoveToLocation(webElement = element)
+driver$click()
+```
+
+*Click Multiple Items:*
+
+```R
+driver$navigate("https://scrapethissite.com/pages/ajax-javascript/#2011")
+elements <- driver$findElements(using = "css",".year-link")
+for(element in elements){
+    element$clickElement()
+    Sys.sleep(2)
+}
+```
+
+*Go to Different URLs by Clicking Links:*
+
+```R
+driver$navigate("http://books.toscrape.com/")
+elements <- driver$findElements(using = "css",".nav-list ul a")
+for(i in 1:length(elements)){
+    elements[[i]]$clickElement()
+    Sys.sleep(2)
+    #do something and go back to previous page
+    driver$goBack()
+    Sys.sleep(1)
+    # refresh the elements
+    elements <- driver$findElements(using = "css",".nav-list ul a")
+}
+```
+
+**3. Simulating Text Input:**
+
+*Enter Text and Search*
+
+```R
+driver$navigate("https://www.google.com/")
+#selcet input box
+element <- driver$findElement(using = "css",'input[name="q"]')
+#send text to input box. don't forget to use `list()` when sending text
+element$sendKeysToElement(list("Web Scraping"))
+#select search button
+element <- driver$findElement(using = "css",'input[name="btnK"]')
+element$clickElement()
+```
+
+
+
+*Clear Input Box*
+
+```R
+driver$navigate("https://www.google.com/")
+#selcet input box
+element <- driver$findElement(using = "css",'input[name="q"]')
+element$sendKeysToElement(list("Web Scraping"))
+#clear input box
+element$clearElement()
+```
+
+
+
+**4. Logins:**
+
+Login is simple using RSelenium. Instead of doing post request, it's just a combination of sending texts to input boxes and click login button.
+
+
+
+```R
+driver$navigate("http://quotes.toscrape.com/login")
+#enter username
+element <- driver$findElement(using = "css","#username")
+element$sendKeysToElement(list("myusername"))
+#enter password
+element <- driver$findElement(using = "css","#password")
+element$sendKeysToElement(list("mypassword"))
+#click login button
+element <- driver$findElement(using = "css", 'input[type="submit"]')
+element$clickElement()
+```
+
+
+
+
+
+**5. Simulating Key and Button Presses:**
+
+You can also send keys to the browser, you can check all available keys by running `RSelenium::selKeys`.
+
+*Available Keys:*
+
+```R
+ [1] "null"         "cancel"       "help"         "backspace"    "tab"          "clear"        "return"       "enter"        "shift"        "control"     
+[11] "alt"          "pause"        "escape"       "space"        "page_up"      "page_down"    "end"          "home"         "left_arrow"   "up_arrow"    
+[21] "right_arrow"  "down_arrow"   "insert"       "delete"       "semicolon"    "equals"       "numpad_0"     "numpad_1"     "numpad_2"     "numpad_3"    
+[31] "numpad_4"     "numpad_5"     "numpad_6"     "numpad_7"     "numpad_8"     "numpad_9"     "multiply"     "add"          "separator"    "subtract"    
+[41] "decimal"      "divide"       "f1"           "f2"           "f3"           "f4"           "f5"           "f6"           "f7"           "f8"          
+[51] "f9"           "f10"          "f11"          "f12"          "command_meta"
+```
+
+
+
+*Send Key Combinations:*
+
+```R
+driver$navigate("https://scrapethissite.com/pages/ajax-javascript/#2015")
+Sys.sleep(2)
+# Press Control+A to select the entire page
+driver$findElement(using = "css","body")$sendKeysToElement(list(key="control","a"))
+
+```
+
+
+
 
 ## 2.3. <a name="rselenium3">Extracting Texts from Web Pages</a>
 
-### 2.3.1. <a name="rselenium3.1">Extracting Texts using Rselenium</a>
+### 2.3.1. <a name="rselenium3.1">Extracting Content using Rselenium</a>
 
-### 2.3.2. <a name="rselenium3.2">Extracting Texts using rvest</a>
+You can use `findElement()` or `findElements()` to extract single or multiple elements from page source.
+
+**1.  Extract text from a single element:**
+
+use `findElment()` method to select a single matching element, and use `getElementText()` method to extract text.
+
+```R
+driver$navigate("https://scrapethissite.com/pages/simple/")
+element <- driver$findElement(using = "css",".country-capital")
+# get element text
+element$getElementText()[[1]]
+#get element attribute value(get the value for class)
+element$getElementAttribute("class")[[1]]
+```
+
+
+
+**2. Extract text from a list of elements:**
+
+`RSelenium` doesn't support vectorized calculation.So you need to use for loops, apply or map(in `purrr` package) as alternative to get lists of items.
+
+use `findElements()` method to select all matching elements, and use `getElementText()` method to extract text.
+
+```R
+driver$navigate("https://scrapethissite.com/pages/simple/")
+Sys.sleep(2)
+elements <- driver$findElements(using = "css",".country-capital")
+```
+
+
+
+*Use for loop to extract elements:*
+
+```R
+texts <- c()
+for(ele in elements){
+    texts <- append(texts,ele$getElementText()[[1]])
+}
+```
+
+
+
+*Use apply functions to extract elements:*
+
+```R
+# use lapply
+texts_lapply <- lapply(elements,function(x) x$getElementText()[[1]])
+# use sapply
+texts_sapply <- sapply(elements,function(x) x$getElementText()[[1]])
+```
+
+
+
+*Use map functions(using `purrr`) to extract elements:*
+
+```R
+library(purrr)
+# get result as a list
+texts_purrr_map <- map(elements,~ .x$getElementText()[[1]])
+# get result as a string vector
+texts_purrr_map_chr <- map_chr(elements,~ .x$getElementText()[[1]])
+```
+
+ 
+
+**3. Extract attribute(s) from a single element(s)**
+
+The usage is the same as extracting text from element(s), the only difference it that you need to use `getElementAttribute()` method.
+
+```R
+book_partial_links <- lapply(elements,function(x) x$getElementAttribute(attrName="href"))
+```
+
+
+
+
+
+### 2.3.2. <a name="rselenium3.2">Extracting Content using Parsed Page Source and `rvest`</a>
+
+Since the browser will execute JavaScript codes by default, you can use `RSelenium` as a tool to get the parsed content from webpages. In this way, you can benefit from the vectorized calculation in `rvest`. 
+
+Another benefit of using `rvest` is that it runs much faster while extracting information from page source comparing to using `getElementText()` or `getElementAttribute()` method.
+
+```
+library(rvest)
+driver$navigate("https://scrapethissite.com/pages/ajax-javascript/#2015")
+Sys.sleep(2)
+# get parsed page source
+parsed_pagesource <- driver$getPageSource()[[1]]
+# using rvest to extract information
+result <- read_html(parsed_pagesource) %>%
+    html_nodes(".film-title") %>%
+    html_text()
+```
+
+
 
 ## 2.4. <a name = "rselneium4">miscellanea</a>
 
 ### 2.4.1. <a name="rselenium4.1">Javascript</a>
 
+Congratulations, no more concerns about AJAX or JavaScript as the browser will parse everything for you!
+
 ### 2.4.2. <a name="rselenium4.2">Iframe</a>
 
-### 2.4.3. <a name="rselenium4.3">Comparison between Web Scraping Using Rselenium and rvest</a>
+Let's try to get all turtles family name in this [webpage](https://scrapethissite.com/pages/frames/), it doesn't work because the content is another webpage nested in the current one.
+
+```R
+driver$navigate("https://scrapethissite.com/pages/frames/")
+# select all turtles' name
+elements <- driver$findElements(using = "css",".family-name")
+print(elements)
+> list()
+```
+
+
+
+To read the content from inside iframe, we can use `switchToFrame` method.
+
+> switchToFrame(Id)
+> Change focus to another frame on the page. Id can be string|number|null|WebElement Object. If the Id is null, the server should switch to the page's default content.
+
+```R
+driver$navigate("https://scrapethissite.com/pages/frames/")
+# select iframe element
+element <- driver$findElement(using = "css","#iframe")
+#switch to the iframe
+driver$switchToFrame(element)
+
+elements <- driver$findElements(using = "css",".family-name")
+for (ele in elements){
+    print(ele$getElementText()[[1]])
+}
+#switch back to the default page
+driver$switchToFrame()
+```
 
 # 3. <a name="rcrawler">Web Scraping using Rcrawler</a>
